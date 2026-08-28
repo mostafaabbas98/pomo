@@ -1,1 +1,11 @@
-{"name": "pomo", "type": "module"}
+{
+  "name": "pomo",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "^7.0.2"
+  }
+}

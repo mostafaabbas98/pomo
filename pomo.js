@@ -1,4 +1,4 @@
-import { SESSION_MINUTES, formatTime } from "./timer.js";
+import { SESSION_MINUTES, formatTime } from "./timer.ts";
 
 const [command = "start", rawMinutes] = process.argv.slice(2);
 
