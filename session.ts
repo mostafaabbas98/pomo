@@ -5,7 +5,7 @@ export type Phase =
 
 export type Session = { minutes: number; startedAt: string };
 
-function showPhase(phase: Phase): String {
+function showPhase(phase: Phase): string {
   switch (phase.type) {
     case "idle":
       return "idle";
@@ -25,6 +25,8 @@ function isSession(value: unknown): value is Session {
     value !== null &&
     "minutes" in value &&
     typeof value.minutes === "number" &&
+    Number.isInteger(value.minutes) &&
+    value.minutes > 0 &&
     "startedAt" in value &&
     typeof value.startedAt === "string"
   );
