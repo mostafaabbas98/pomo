@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { SESSION_MINUTES, formatTime } from "./timer.ts";
 import { type Session } from "./session.ts";
 
@@ -39,27 +40,26 @@ if (command !== "start") {
 
       try {
         let sessions: Session[] = [];
+        const filePath = path.join(import.meta.dirname, "sessions.json");
 
         try {
-          const rawSessions = await readFile("sessions.json", "utf8");
+          const rawSessions = await readFile(filePath, "utf8");
           sessions = JSON.parse(rawSessions);
         } catch (error) {
           if (
             error instanceof Error &&
             "code" in error &&
-            error.code === "ENOENT"
+            error.code !== "ENOENT"
           ) {
             throw error;
           }
         }
         sessions.push({ minutes, startedAt });
-        await writeFile("sessions.json", JSON.stringify(sessions, null, 2));
+        await writeFile(filePath, JSON.stringify(sessions, null, 2));
       } catch (error) {
-        if (error instanceof Error && "message" in error) {
-          console.error(
-            `pomo: failed to write session file: ${error instanceof Error ? error.message : error}`,
-          );
-        }
+        console.error(
+          `pomo: failed to write session file: ${error instanceof Error ? error.message : error}`,
+        );
         process.exitCode = 1;
         return;
       }
