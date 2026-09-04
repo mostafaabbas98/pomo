@@ -39,7 +39,7 @@ if (command !== "start") {
       clearInterval(t);
 
       try {
-        let sessions: unknown;
+        let sessions;
         const filePath = path.join(import.meta.dirname, "sessions.json");
 
         try {
@@ -48,7 +48,7 @@ if (command !== "start") {
             sessions = JSON.parse(rawSessions);
           } catch (error) {
             console.error(
-              `pomo: invalid JSON in file "${filePath}": ${(error as Error).message}`,
+              `pomo: invalid JSON in file "${filePath}": ${error instanceof Error ? error.message : error}`,
             );
             sessions = undefined;
           }
@@ -72,7 +72,8 @@ if (command !== "start") {
           goodSessions = [];
         } else {
           goodSessions = [];
-          sessions.forEach((session, index) => {
+          const validSessions: unknown[] = sessions;
+          validSessions.forEach((session, index) => {
             const result = parseSession(session);
             if (result.ok) {
               goodSessions.push(result.value);

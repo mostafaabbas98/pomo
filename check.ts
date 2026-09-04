@@ -9,16 +9,18 @@ if (argPath) {
     const filePath = path.join(import.meta.dirname, argPath);
     const rawSessions = await readFile(filePath, "utf8");
 
-    let sessions: unknown;
+    let sessions;
     let parsedOk = true;
     try {
       sessions = JSON.parse(rawSessions);
     } catch (error) {
-      console.error(
-        `pomo: invalid JSON in file "${filePath}": ${(error as Error).message}`,
-      );
-      process.exitCode = 1;
-      parsedOk = false;
+      if (error instanceof Error) {
+        console.error(
+          `pomo: invalid JSON in file "${filePath}": ${error.message}`,
+        );
+        process.exitCode = 1;
+        parsedOk = false;
+      }
     }
 
     if (parsedOk && !Array.isArray(sessions)) {
@@ -30,7 +32,8 @@ if (argPath) {
     }
 
     if (parsedOk) {
-      (sessions as unknown[]).forEach((session, index) => {
+      const validSessions: unknown[] = sessions;
+      validSessions.forEach((session, index) => {
         const result = parseSession(session);
         if (!result.ok) {
           console.error(
