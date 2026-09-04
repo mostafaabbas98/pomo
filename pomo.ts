@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SESSION_MINUTES, formatTime } from "./timer.ts";
-import { type Session } from "./session.ts";
+import { type Session, parseSession } from "./session.ts";
 
 const [command = "start", rawMinutes] = process.argv.slice(2);
 
@@ -39,12 +39,19 @@ if (command !== "start") {
       clearInterval(t);
 
       try {
-        let sessions: Session[] = [];
+        let sessions: unknown;
         const filePath = path.join(import.meta.dirname, "sessions.json");
 
         try {
           const rawSessions = await readFile(filePath, "utf8");
-          sessions = JSON.parse(rawSessions);
+          try {
+            sessions = JSON.parse(rawSessions);
+          } catch (error) {
+            console.error(
+              `pomo: invalid JSON in file "${filePath}": ${(error as Error).message}`,
+            );
+            sessions = undefined;
+          }
         } catch (error) {
           if (
             error instanceof Error &&
@@ -54,8 +61,31 @@ if (command !== "start") {
             throw error;
           }
         }
-        sessions.push({ minutes, startedAt });
-        await writeFile(filePath, JSON.stringify(sessions, null, 2));
+
+        let goodSessions: Session[];
+        if (sessions === undefined) {
+          goodSessions = [];
+        } else if (!Array.isArray(sessions)) {
+          console.error(
+            `pomo: ignoring session file "${filePath}": expected an array, got ${typeof sessions}`,
+          );
+          goodSessions = [];
+        } else {
+          goodSessions = [];
+          sessions.forEach((session, index) => {
+            const result = parseSession(session);
+            if (result.ok) {
+              goodSessions.push(result.value);
+            } else {
+              console.error(
+                `pomo: ignoring invalid session at index ${index} in "${filePath}": ${result.errors.join(", ")}`,
+              );
+            }
+          });
+        }
+
+        goodSessions.push({ minutes, startedAt });
+        await writeFile(filePath, JSON.stringify(goodSessions, null, 2));
       } catch (error) {
         console.error(
           `pomo: failed to write session file: ${error instanceof Error ? error.message : error}`,
